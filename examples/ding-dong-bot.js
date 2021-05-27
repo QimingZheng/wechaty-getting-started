@@ -6,9 +6,11 @@ const {
   Wechaty,
   ScanStatus,
   log,
-}               = require('wechaty')
+} = require('wechaty')
 
-function onScan (qrcode, status) {
+var mute = true;
+
+function onScan(qrcode, status) {
   if (status === ScanStatus.Waiting || status === ScanStatus.Timeout) {
     require('qrcode-terminal').generate(qrcode, { small: true })  // show qrcode on console
 
@@ -24,19 +26,31 @@ function onScan (qrcode, status) {
   }
 }
 
-function onLogin (user) {
+function onLogin(user) {
   log.info('StarterBot', '%s login', user)
 }
 
-function onLogout (user) {
+function onLogout(user) {
   log.info('StarterBot', '%s logout', user)
 }
 
-async function onMessage (msg) {
-  log.info('StarterBot', msg.toString())
-
-  if (msg.text() === 'ding') {
-    await msg.say('dong')
+async function onMessage(msg) {
+  log.info('StarterBot', msg.toString());
+  if (msg.room() != null) {
+    log.info("works");
+  } else {
+    log.info("fail");
+  }
+  if (mute === false && !msg.self() && msg.room() === null) {
+      await msg.say('hi, 我是qm的bot小跟班，qm还没看到消息，请您稍等!');
+  }
+  if (msg.text() === 'unmute') {
+    mute = false;
+    log.info('bot enabled');
+  }
+  if (msg.text() === 'mute') {
+    mute = true;
+    log.info('bot disabled');
   }
 }
 
@@ -57,9 +71,9 @@ const bot = new Wechaty({
   // puppet: 'wechaty-puppet-wechat',
 })
 
-bot.on('scan',    onScan)
-bot.on('login',   onLogin)
-bot.on('logout',  onLogout)
+bot.on('scan', onScan)
+bot.on('login', onLogin)
+bot.on('logout', onLogout)
 bot.on('message', onMessage)
 
 bot.start()
